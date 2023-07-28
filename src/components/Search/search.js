@@ -1,15 +1,16 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setFilter } from "../../redux/filter/filter-slice";
-import { getFilter } from "../../redux/filter/filter-selector";
+import { selectFilter } from "../../redux/selectors";
 import { SearchName, SearchInput, SearhField } from "./search.styled";
 
 export const Search = () => {
-  const filter = useSelector(getFilter);
+  const filter = useSelector(selectFilter);
   const dispatch = useDispatch();
 
   const changeFilter = (e) => {
-    dispatch(setFilter(e.target.value.toLowerCase().trim()));
+    const searchObject = e.target.value.toLowerCase().trim();
+    dispatch(setFilter(searchObject));
   };
 
   return (

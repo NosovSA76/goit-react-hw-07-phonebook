@@ -1,16 +1,15 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Formik } from "formik";
-import * as yup from "yup";
 import "yup-phone";
+import { schema } from "../../shared/schemaYup";
 import { Report } from "notiflix/build/notiflix-report-aio";
 import { Confirm } from "notiflix/build/notiflix-confirm-aio";
 import { BsFillTelephoneFill, BsPersonFill } from "react-icons/bs";
 import { IoMdPersonAdd } from "react-icons/io";
 import {
   addContact,
-  updatedContacts,
-} from "../../redux/contacts/contacts-slice";
-import { getContacts } from "../../redux/contacts/contacts-selectors";
+  changeContact,
+} from "../../redux/contacts/contacts-operations";
 
 import {
   Form,
@@ -22,71 +21,53 @@ import {
   LabelSpan,
 } from "./addform.styled";
 
-const schema = yup.object().shape({
-  name: yup
-    .string()
-    .trim()
-    .matches(
-      /^[a-zA-Zа-яА-ЯІіЇїЄєҐґ\s'-]+$/,
-      "Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d`Artagnan"
-    )
-    .required(),
-  number: yup
-    .string()
-    .matches(
-      /^\+38-\d{3}-\d{3}-\d{2}-\d{2}$/,
-      "Phone number is not valid. Please use format +38-XXX-XXX-XX-XX"
-    )
-    .required(),
-});
+const initialValues = { avatar: "", name: "", phone: "" };
 
-const initialValues = { name: "", number: "" };
-
-export const InputForm = () => {
-  const contacts = useSelector(getContacts);
+export const InputForm = ({ contacts }) => {
   const dispatch = useDispatch();
 
-  const onAddContact = ({ name, number }) => {
+  const onAddContact = (data) => {
     const existingContact = contacts.find(
-      (contact) => contact.name === name && contact.number === number
+      (contact) => contact.name === data.name && contact.phone === data.phone
     );
     const existingContactByName = contacts.find(
-      (contact) => contact.name === name && contact.number !== number
+      (contact) => contact.name === data.name && contact.phone !== data.phone
     );
     const existingContactByPhone = contacts.find(
-      (contact) => contact.number === number
+      (contact) => contact.phone === data.phone
     );
 
     if (existingContact) {
       Report.failure("Such a contact already exists", "", "Okay");
       return;
-    }
-
-    if (existingContactByName) {
-      const id = existingContactByName.id;
+    } else if (existingContactByPhone) {
+      Report.failure(
+        `This number is - ${existingContactByPhone.name}'s`,
+        "",
+        "Okay"
+      );
+      return;
+    } else if (existingContactByName) {
       Confirm.show(
         "",
         "Another number is recorded for this contact should I correct it?",
         "Yes",
         "No",
         () => {
-          dispatch(updatedContacts({ id, number }));
+          const changedContact = {
+            ...existingContactByName,
+            phone: data.phone,
+          };
+          console.log(changedContact);
+          dispatch(changeContact(changedContact));
         },
         () => {
           return;
         }
       );
+    } else {
+      dispatch(addContact(data));
     }
-
-    if (existingContactByPhone) {
-      console.log("333");
-      alert(
-        `Such a phone number is recorded for ${existingContactByPhone.name}`
-      );
-      return;
-    }
-
-    dispatch(addContact({ name, number }));
   };
 
   return (
@@ -94,11 +75,18 @@ export const InputForm = () => {
       initialValues={initialValues}
       onSubmit={(values, { resetForm }) => {
         onAddContact({ ...values });
-        resetForm();
       }}
       validationSchema={schema}
     >
       <Form autoComplete="off">
+        <FormField>
+          <LabelWrapper>
+            <BsPersonFill />
+            <LabelSpan>Avatar</LabelSpan>
+          </LabelWrapper>
+          <FieldFormik name="avatar" placeholder="Add link to avatar" />
+          <ErrorMessage name="avatar" component="span" />
+        </FormField>
         <FormField>
           <LabelWrapper>
             <BsPersonFill />
@@ -114,10 +102,10 @@ export const InputForm = () => {
           </LabelWrapper>
           <FieldFormik
             type="tel"
-            name="number"
+            name="phone"
             placeholder="+38-050-123-45-67"
           />
-          <ErrorMessage name="number" component="span" />
+          <ErrorMessage name="phone" component="span" />
         </FormField>
         <StyledButton type="submit">
           <IoMdPersonAdd size="16" />

@@ -1,24 +1,67 @@
-import { styled } from "styled-components";
+import { styled, keyframes } from "styled-components";
+
+const vibrateAnimation = keyframes`
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(2px) rotate(2deg);
+  }
+  75% {
+    transform: translateY(-2px) rotate(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+`;
+
 
 export const ContactListContainer = styled.ul`
 `
 export const ContactListItem = styled.li`
 display: flex;
-width: 512px;
+width: 560px;
 margin: ${props => props.theme.space[4]}px auto;
 justify-content: space-between;
 ` 
+export const AvatarBlok = styled.div`
+display: block;
+margin: 0 10px 0 0;
+width: 48px;
+align-items: center;
+cursor: pointer;`
+
+export const Avatar = styled.img`
+display: block;
+margin: 0 10px 0 0;
+width: 48px;
+align-items: center;
+`
+
 export const ContactsName = styled.p`
 display: flex;
 margin: 0;
 width: ${props => props.theme.space[7]}px;
 align-items: center;
 `
-export const ContactsPhone = styled.p`
+export const ContactsPhone = styled.a`
 margin: 0;
 display: flex;
 width: ${props => props.theme.space[7]}px;
 align-items: center;
+  & .fade-effect {
+    transition: transform 0.5s;
+    animation-play-state: paused;
+  }
+  
+  &:hover .fade-effect {
+    transform: rotate(-360deg);
+    animation: ${vibrateAnimation} 0.3s infinite;
+  }
+}
 `
 export const DeleteContacts = styled.button`
 cursor: pointer;
@@ -41,3 +84,10 @@ box-shadow: -1px -1px 1px #fff, 1px 1px 1px #babecc;
     transform: translateY(4px);
   } 
 `
+export const Info = styled.div`
+  padding-top: ${p => p.theme.space[3]}px;
+  padding-bottom: ${p => p.theme.space[3]}px;
+  padding-left: ${p => p.theme.space[4]}px;
+  padding-right: ${p => p.theme.space[4]}px;
+  text-align: center;
+`;

@@ -1,38 +1,81 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { nanoid } from "nanoid";
+import { createSlice, isAnyOf } from "@reduxjs/toolkit";
+
+import {
+  fetchContacts,
+  addContact,
+  deleteContact,
+  changeContact,
+} from "./contacts-operations";
+
+const initialState = {
+  items: [],
+  isLoading: false,
+  error: null,
+};
+
+const customArrThunks = [
+  fetchContacts,
+  addContact,
+  deleteContact,
+  changeContact,
+];
+
+const status = {
+  pending: "pending",
+  fulfilled: "fulfilled",
+  rejected: "rejected",
+};
+
+const fn = (status) => customArrThunks.map((el) => el[status]);
+
+const handlePending = (state) => {
+  state.isLoading = true;
+  state.error = null;
+};
+
+const handleRejected = (state, { payload }) => {
+  state.isLoading = false;
+  state.error = payload;
+};
+
+const handleFulfilled = (state) => {
+  state.isLoading = false;
+  state.error = null;
+};
+
+const handleFulfilledGet = (state, { payload }) => {
+  state.items = payload;
+};
+
+const handleFulfilledAdd = (state, { payload }) => {
+  state.items.push(payload);
+};
+
+const handleFulfilledDelete = (state, { payload }) => {
+  state.items = state.items.filter(({ id }) => id !== payload);
+};
+
+const handleFulfilledChange = (state, { payload }) => {
+  const index = state.items.findIndex(({ id }) => id === payload.id);
+  if (index !== -1) {
+    state.items[index] = payload;
+  }
+};
 
 const contactsSlice = createSlice({
   name: "contacts",
-  initialState: [],
-  reducers: {
-    addContact: {
-      reducer: (state, { payload }) => {
-        return [...state, payload];
-      },
-      prepare: (data) => {
-        return {
-          payload: {
-            id: nanoid(),
-            ...data,
-          },
-        };
-      },
-    },
-
-    deleteContact: (state, { payload }) => {
-      return state.filter(({ id }) => id !== payload);
-    },
-
-    updatedContacts: (state, { payload }) => {
-      const { id, number } = payload;
-      const contactToUpdate = state.find((contact) => contact.id === id);
-      if (contactToUpdate) {
-        contactToUpdate.number = number;
-      }
-    },
+  initialState,
+  extraReducers: (builder) => {
+    const { pending, fulfilled, rejected } = status;
+    builder
+      .addCase(fetchContacts.fulfilled, handleFulfilledGet)
+      .addCase(addContact.fulfilled, handleFulfilledAdd)
+      .addCase(deleteContact.fulfilled, handleFulfilledDelete)
+      .addCase(changeContact.fulfilled, handleFulfilledChange)
+      .addMatcher(isAnyOf(...fn(pending)), handlePending)
+      .addMatcher(isAnyOf(...fn(fulfilled)), handleFulfilled)
+      .addMatcher(isAnyOf(...fn(rejected)), handleRejected);
   },
 });
 
-export const { addContact, deleteContact, updatedContacts } =
-  contactsSlice.actions;
 export default contactsSlice.reducer;
